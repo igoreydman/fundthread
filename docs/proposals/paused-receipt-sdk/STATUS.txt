@@ -1,0 +1,9 @@
+UNACCEPTED / PAUSED — outside active runtime, build, test and dependency paths.
+
+The user explicitly rejected runtime OpenAI API/Agents SDK use as an inferred requirement. FundThread is being built with Codex. The technology-driven work order is superseded; this experiment is not a product feature or readiness gap.
+
+These files preserve the dormant server experiment, synthetic fixture, experimental consent helper, SDK tests, previous notes and dependency patch. They have no HTTP route or UI integration. No live/paid model was called, no private records uploaded and no credentials configured. Earlier mocked SDK checks do not establish live API quality or privacy certification.
+
+Only the useful local receipt correction remains active: printed TOTAL/GRAND TOTAL takes precedence over lower AMOUNT DUE; conflicting total-like amounts get source buttons; ambiguous multi-amount lines stay unresolved. Local OCR, financial rules, manual reviewed values, external decisions/payments and audience-specific reports remain the product.
+
+Only our three added dependencies and their lock changes were undone. The one pre-existing lock entry affected by installation had only lost its dev marker; its version/content was unchanged. No commit, deployment or publishing occurred. Do not restore this experiment without a concrete user-workflow reason and new scope authorization. The earlier paused public-fact/story draft was not changed.

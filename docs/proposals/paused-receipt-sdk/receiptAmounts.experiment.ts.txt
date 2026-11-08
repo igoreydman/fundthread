@@ -1,0 +1,139 @@
+import { receiptRows } from "./extraction";
+import { toMinor } from "./money";
+import type { Box, Expense, Extraction } from "./types";
+
+export type AmountKind =
+  | "grand_total"
+  | "total"
+  | "amount_due"
+  | "subtotal"
+  | "tax"
+  | "tender"
+  | "change";
+export type AmountCandidate = {
+  kind: AmountKind;
+  amountMinor: string;
+  box: Box;
+};
+export type AmountReviewPayload = {
+  version: 1;
+  task: "review_receipt_amounts";
+  evidence: "synthetic-demo" | "workspace-records";
+  currency: "USD";
+  candidates: { sourceId: string; kind: AmountKind; amountMinor: string }[];
+};
+export function receiptAmounts(
+  extraction: Extraction | null,
+): AmountCandidate[] {
+  if (!extraction) return [];
+  return receiptRows(extraction.words, extraction.page).flatMap(
+    ({ text, box }) => {
+      const label = text.match(
+        /^\s*(grand\s+total|total|amount\s+due|sub\s*total|sales\s+tax|tax|tender(?:ed)?|cash|change)\b/i,
+      );
+      if (!label) return [];
+      const amounts = [
+        ...text
+          .slice(label[0].length)
+          .matchAll(/(?:\$|USD\s*)?(\d{1,3}(?:,\d{3})*\.\d{2}|\d+\.\d{2})/g),
+      ];
+      // Do not silently choose among multiple amounts on one ambiguous line.
+      if (amounts.length !== 1) return [];
+      const normalized = label[1].toLowerCase().replace(/\s/g, "");
+      const kind: AmountKind =
+        normalized === "grandtotal"
+          ? "grand_total"
+          : normalized === "amountdue"
+            ? "amount_due"
+            : normalized === "subtotal"
+              ? "subtotal"
+              : /tax$/.test(normalized)
+                ? "tax"
+                : /^(cash|tender)/.test(normalized)
+                  ? "tender"
+                  : (normalized as AmountKind);
+      try {
+        return [{ kind, amountMinor: toMinor(amounts[0][1]), box: { ...box } }];
+      } catch {
+        return [];
+      }
+    },
+  );
+}
+export function conflictingTotals(extraction: Extraction | null) {
+  const totals = receiptAmounts(extraction).filter((x) =>
+    ["total", "grand_total", "amount_due"].includes(x.kind),
+  );
+  return new Set(totals.map((x) => x.amountMinor)).size > 1 ? totals : [];
+}
+const signature = (e: Expense) =>
+  JSON.stringify([e.id, e.documentId, e.hash, e.revision, e.extraction]);
+
+// Internal preparation/consent contract only. No transport, key, download or
+// financial write. The future adapter must recheck its current workspace too.
+export class ReceiptAmountReview {
+  #signature: string;
+  #payload: AmountReviewPayload;
+  #sources = new Map<string, Box>();
+  #stale = false;
+  constructor(expense: Expense, evidence: AmountReviewPayload["evidence"]) {
+    if (!["synthetic-demo", "workspace-records"].includes(evidence))
+      throw new Error("Choose evidence provenance.");
+    this.#signature = signature(expense);
+    const candidates = receiptAmounts(expense.extraction);
+    if (candidates.length < 2 || candidates.length > 20)
+      throw new Error("Select a page with two to twenty amount sources.");
+    this.#payload = {
+      version: 1,
+      task: "review_receipt_amounts",
+      evidence,
+      currency: "USD",
+      candidates: candidates.map((c) => {
+        const sourceId = crypto.randomUUID();
+        this.#sources.set(sourceId, { ...c.box });
+        return { sourceId, kind: c.kind, amountMinor: c.amountMinor };
+      }),
+    };
+  }
+  preview(): AmountReviewPayload {
+    return structuredClone(this.#payload);
+  }
+  #check(current: Expense) {
+    if (signature(current) !== this.#signature) this.#stale = true;
+    if (this.#stale)
+      throw new Error(
+        "Receipt evidence changed. Prepare and review a new payload.",
+      );
+  }
+  source(sourceId: string, current: Expense) {
+    this.#check(current);
+    const box = this.#sources.get(sourceId);
+    if (!box) throw new Error("Unknown receipt source.");
+    return { ...box };
+  }
+  async approveExactPayload(
+    reviewedPayload: AmountReviewPayload,
+    current: Expense,
+    confirmed: boolean,
+  ) {
+    this.#check(current);
+    if (
+      confirmed !== true ||
+      JSON.stringify(reviewedPayload) !== JSON.stringify(this.#payload)
+    )
+      throw new Error(
+        "Explicitly review and confirm the exact outbound payload.",
+      );
+    const payload = this.preview();
+    const bytes = new TextEncoder().encode(JSON.stringify(payload));
+    const hash = await crypto.subtle.digest("SHA-256", bytes);
+    this.#check(current);
+    return {
+      payload,
+      operatorConfirmed: true as const,
+      reviewedPayloadSha256: [...new Uint8Array(hash)]
+        .map((x) => x.toString(16).padStart(2, "0"))
+        .join(""),
+    };
+  }
+}

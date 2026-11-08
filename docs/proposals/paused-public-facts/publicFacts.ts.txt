@@ -1,0 +1,235 @@
+import { validDate } from "./browserRules";
+import type { Expense, Snapshot } from "./types";
+
+// This module has no storage, network, download, or model interface. "Public"
+// describes its field allowlist, not an anonymity or publication guarantee.
+const categories = [
+  "Workshop supplies", "Printing", "Travel", "Meals", "Equipment", "Other",
+] as const;
+type Category = (typeof categories)[number];
+type Evidence = "synthetic-demo" | "workspace-records";
+const maxSources = 1000;
+const maxMinor = 1_000_000_000_000_000n;
+const uuid = "[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}";
+const factIdPattern = new RegExp(`^fact_${uuid}$`);
+
+export type PublicFactPayload = {
+  schemaVersion: 1;
+  evidence: Evidence;
+  measure: "approved-reimbursement";
+  period: string;
+  facts: { factId: string; category: Category; currency: "USD"; amountMinor: string }[];
+};
+export type FactSelection = {
+  expenseIds: string[];
+  period: { year: number; quarter: number };
+};
+type Phase = "pending" | "approved-local" | "stale" | "revoked";
+
+declare const scopeBrand: unique symbol;
+export type LocalFactScope = { readonly [scopeBrand]: true };
+const scopes = new WeakMap<LocalFactScope, Evidence>();
+
+// The future workspace adapter must mint a NEW scope on unlock/session reset,
+// never serialize it, and never reuse it across workspaces. Not wired to the app.
+export function createLocalFactScope(evidence: Evidence): LocalFactScope {
+  if (evidence !== "synthetic-demo" && evidence !== "workspace-records")
+    throw new Error("Choose an explicit evidence kind.");
+  const scope = Object.freeze({}) as LocalFactScope;
+  scopes.set(scope, evidence);
+  return scope;
+}
+export type FactSource = { scope: LocalFactScope; snapshot: Snapshot };
+
+type PrivateSource = {
+  expenseId: string;
+  revision: number;
+  documentId: string;
+  originalHash: string;
+  expenseDate: string;
+  category: Category;
+  totalMinor: string;
+  eligibleMinor: string;
+  allocations: { fundId: string; amountMinor: string }[];
+};
+
+function shape(value: unknown, keys: string[]): Record<string, unknown> {
+  if (!value || typeof value !== "object" || Array.isArray(value) ||
+    ![Object.prototype, null].includes(Object.getPrototypeOf(value)))
+    throw new Error("Expected a plain data object.");
+  const own = Reflect.ownKeys(value);
+  if (own.length !== keys.length || own.some((k) => typeof k !== "string" || !keys.includes(k)))
+    throw new Error("Unexpected or missing fields.");
+  for (const key of keys)
+    if (!Object.getOwnPropertyDescriptor(value, key)?.hasOwnProperty("value"))
+      throw new Error("Only data fields are allowed.");
+  return value as Record<string, unknown>;
+}
+function cents(value: unknown, limit = maxMinor): bigint {
+  if (typeof value !== "string" || !/^(0|[1-9]\d{0,18})$/.test(value))
+    throw new Error("Use canonical non-negative integer cents.");
+  const result = BigInt(value);
+  if (result > limit) throw new Error("Amount exceeds the supported limit.");
+  return result;
+}
+function category(value: unknown): Category {
+  if (!categories.includes(value as Category))
+    throw new Error("Use a controlled public category.");
+  return value as Category;
+}
+function period(value: unknown): string {
+  const p = shape(value, ["year", "quarter"]);
+  if (!Number.isInteger(p.year) || Number(p.year) < 1 || Number(p.year) > 9999 ||
+    !Number.isInteger(p.quarter) || Number(p.quarter) < 1 || Number(p.quarter) > 4)
+    throw new Error("Choose a valid year and calendar quarter.");
+  return `${String(p.year).padStart(4, "0")}-Q${p.quarter}`;
+}
+
+// Use this at any future boundary too. It rejects extra fields and reconstructs
+// literals; it never forwards a Snapshot, report CSV, or arbitrary object spread.
+export function validatePublicFactPayload(value: unknown): PublicFactPayload {
+  const p = shape(value, ["schemaVersion", "evidence", "measure", "period", "facts"]);
+  if (p.schemaVersion !== 1 || p.measure !== "approved-reimbursement" ||
+    (p.evidence !== "synthetic-demo" && p.evidence !== "workspace-records") ||
+    typeof p.period !== "string" || !/^(?!0000)\d{4}-Q[1-4]$/.test(p.period) ||
+    !Array.isArray(p.facts) || !p.facts.length || p.facts.length > categories.length)
+    throw new Error("Invalid public fact envelope.");
+  const ids = new Set<string>(), usedCategories = new Set<Category>();
+  const facts = p.facts.map((raw) => {
+    const f = shape(raw, ["factId", "category", "currency", "amountMinor"]);
+    const c = category(f.category);
+    const amount = cents(f.amountMinor, maxMinor * BigInt(maxSources));
+    if (typeof f.factId !== "string" || !factIdPattern.test(f.factId) ||
+      f.currency !== "USD" || amount === 0n || ids.has(f.factId) || usedCategories.has(c))
+      throw new Error("Invalid or duplicate public fact.");
+    ids.add(f.factId);
+    usedCategories.add(c);
+    return { factId: f.factId, category: c, currency: "USD" as const, amountMinor: amount.toString() };
+  }).sort((a, b) => categories.indexOf(a.category) - categories.indexOf(b.category));
+  return { schemaVersion: 1, evidence: p.evidence, measure: "approved-reimbursement", period: p.period, facts };
+}
+
+function collect(snapshot: Snapshot, ids: string[], selectedPeriod: string): PrivateSource[] {
+  if (snapshot.currency !== "USD") throw new Error("Only USD is supported.");
+  const result: PrivateSource[] = [];
+  const documents = new Set<string>(), hashes = new Set<string>();
+  const funds = new Set(snapshot.funds.map((f) => f.id));
+  if (funds.size !== snapshot.funds.length) throw new Error("Ambiguous funding sources.");
+  for (const id of ids) {
+    const matches = snapshot.expenses.filter((e) => e.id === id);
+    if (matches.length !== 1) throw new Error("A selected source is missing or ambiguous.");
+    const e: Expense = matches[0];
+    if (!e.reviewed || !e.approved || !Number.isSafeInteger(e.revision) || e.revision < 1)
+      throw new Error("Select reviewed and approved source revisions.");
+    if (!e.documentId || typeof e.hash !== "string" || !/^[a-f0-9]{64}$/.test(e.hash) ||
+      documents.has(e.documentId) || hashes.has(e.hash))
+      throw new Error("Source originals need distinct document identities and SHA-256 hashes.");
+    documents.add(e.documentId);
+    hashes.add(e.hash);
+    if (!validDate(e.expenseDate) ||
+      `${e.expenseDate.slice(0, 4)}-Q${Math.ceil(Number(e.expenseDate.slice(5, 7)) / 3)}` !== selectedPeriod)
+      throw new Error("Every selected source must fall in the chosen quarter.");
+    const total = cents(e.totalMinor), eligible = cents(e.eligibleMinor);
+    const allocatedFunds = new Set<string>();
+    let allocated = 0n;
+    for (const a of e.allocations) {
+      if (!funds.has(a.fundId) || allocatedFunds.has(a.fundId))
+        throw new Error("Invalid or duplicate source allocation.");
+      allocatedFunds.add(a.fundId);
+      allocated += cents(a.amountMinor);
+    }
+    if (!eligible || eligible > total || allocated !== eligible)
+      throw new Error("Source allocations must match the eligible amount exactly.");
+    result.push({ expenseId: e.id, revision: e.revision, documentId: e.documentId,
+      originalHash: e.hash, expenseDate: e.expenseDate, category: category(e.category),
+      totalMinor: total.toString(), eligibleMinor: eligible.toString(),
+      allocations: e.allocations.map((a) => ({ fundId: a.fundId, amountMinor: cents(a.amountMinor).toString() }))
+        .sort((a, b) => a.fundId.localeCompare(b.fundId)) });
+  }
+  return result.sort((a, b) => a.expenseId.localeCompare(b.expenseId));
+}
+
+export class LocalPublicFactReview {
+  #scope: LocalFactScope;
+  #reviewId = crypto.randomUUID();
+  #payload: PublicFactPayload;
+  #sources: Record<string, PrivateSource[]> = {};
+  #selectedIds: string[];
+  #sourceSeal: string;
+  #phase: Phase = "pending";
+  #approvedAt: string | null = null;
+
+  constructor(source: FactSource, selection: FactSelection) {
+    const evidence = scopes.get(source.scope);
+    if (!evidence) throw new Error("Use a live local fact scope.");
+    shape(selection, ["expenseIds", "period"]);
+    const ids = selection.expenseIds;
+    if (!Array.isArray(ids) || !ids.length || ids.length > maxSources ||
+      ids.some((id) => typeof id !== "string" || !id || id.length > 200) || new Set(ids).size !== ids.length)
+      throw new Error("Select distinct source records (1–1000).");
+    this.#scope = source.scope;
+    this.#selectedIds = [...ids];
+    const selectedPeriod = period(selection.period);
+    const sources = collect(source.snapshot, this.#selectedIds, selectedPeriod);
+    this.#sourceSeal = JSON.stringify(sources);
+    const facts = categories.flatMap((c) => {
+      const group = sources.filter((s) => s.category === c);
+      if (!group.length) return [];
+      const factId = `fact_${crypto.randomUUID()}`;
+      this.#sources[factId] = group;
+      return [{ factId, category: c, currency: "USD" as const,
+        amountMinor: group.reduce((n, s) => n + BigInt(s.eligibleMinor), 0n).toString() }];
+    });
+    this.#payload = validatePublicFactPayload({ schemaVersion: 1, evidence,
+      measure: "approved-reimbursement", period: selectedPeriod, facts });
+  }
+
+  #refresh(source: FactSource) {
+    if (this.#phase === "stale" || this.#phase === "revoked") return;
+    try {
+      if (source.scope !== this.#scope || JSON.stringify(collect(source.snapshot, this.#selectedIds, this.#payload.period)) !== this.#sourceSeal)
+        throw new Error("Source changed.");
+    } catch {
+      this.#phase = "stale";
+      this.#approvedAt = null;
+    }
+  }
+
+  preview(source: FactSource) {
+    this.#refresh(source);
+    return { reviewId: this.#reviewId, phase: this.#phase,
+      payload: validatePublicFactPayload(this.#payload) };
+  }
+
+  approveLocal(source: FactSource, confirmation: {
+    reviewId: string; reviewedPayload: unknown; confirmed: boolean; acknowledgedDisclosureRisk: boolean;
+  }) {
+    this.#refresh(source);
+    if (this.#phase !== "pending") throw new Error("Create a new review after approval, invalidation or revocation.");
+    if (confirmation.reviewId !== this.#reviewId || confirmation.confirmed !== true ||
+      confirmation.acknowledgedDisclosureRisk !== true ||
+      JSON.stringify(validatePublicFactPayload(confirmation.reviewedPayload)) !== JSON.stringify(this.#payload))
+      throw new Error("Confirm the exact reviewed facts and disclosure risk.");
+    this.#approvedAt = new Date().toISOString();
+    this.#phase = "approved-local";
+  }
+
+  approvedFactsForLocalUse(source: FactSource): PublicFactPayload {
+    this.#refresh(source);
+    if (this.#phase !== "approved-local") throw new Error("Local fact approval is missing, stale or revoked.");
+    return validatePublicFactPayload(this.#payload);
+  }
+
+  revoke() {
+    if (this.#phase !== "stale") this.#phase = "revoked";
+    this.#approvedAt = null;
+  }
+
+  // Explicitly PRIVATE audit access; never bundle this with public facts.
+  // Caller must refresh against current authoritative state before using it.
+  privateAudit(source: FactSource) {
+    this.#refresh(source);
+    return { reviewId: this.#reviewId, phase: this.#phase, approvedAt: this.#approvedAt,
+      approvalScope: "local-use-only" as const, sourceMap: structuredClone(this.#sources) };
+  }
+}

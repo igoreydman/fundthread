@@ -1,0 +1,339 @@
+import { describe, expect, it, vi } from "vitest";
+import {
+  Usage,
+  type Model,
+  type ModelRequest,
+  type ModelResponse,
+} from "@openai/agents";
+import { parseReceipt } from "./extraction";
+import {
+  ReceiptAmountReview,
+  conflictingTotals,
+  receiptAmounts,
+} from "./receiptAmounts";
+import {
+  amountPayloadSchema,
+  runReceiptAmountAgent,
+} from "../server/receiptAmountAgent";
+import type { Expense, Word } from "./types";
+
+function fixture(): Expense {
+  const lines = [
+    "PRIVATE MERCHANT",
+    "Person private@example.invalid",
+    "SUBTOTAL $48.50",
+    "TAX $4.75",
+    "TOTAL $53.25",
+    "AMOUNT DUE $0.00",
+  ];
+  const words: Word[] = lines.map((text, i) => ({
+    text,
+    page: 1,
+    x: 0.1,
+    y: 0.05 + i * 0.12,
+    w: 0.7,
+    h: 0.03,
+  }));
+  return {
+    id: "private-claim",
+    documentId: "private-original",
+    hash: "private-hash",
+    revision: 1,
+    merchant: "PRIVATE MERCHANT",
+    claimant: "PRIVATE PERSON",
+    purpose: "PRIVATE PURPOSE",
+    filename: "private-file.pdf",
+    mime: "application/pdf",
+    expenseDate: "2026-10-22",
+    category: "Other",
+    totalMinor: "5325",
+    eligibleMinor: "5325",
+    reviewed: false,
+    approved: false,
+    approver: "PRIVATE APPROVER",
+    approvalReference: "PRIVATE REF",
+    paidMinor: "0",
+    reconciledMinor: "0",
+    allocations: [],
+    extraction: parseReceipt(words, 1, "synthetic fixture"),
+  };
+}
+function mockModel(answer: unknown): Model & { calls: ModelRequest[] } {
+  const calls: ModelRequest[] = [];
+  return {
+    calls,
+    async getResponse(request): Promise<ModelResponse> {
+      calls.push(request);
+      return {
+        usage: new Usage({ requests: 1 }),
+        output: [
+          {
+            type: "message",
+            role: "assistant",
+            status: "completed",
+            content: [{ type: "output_text", text: JSON.stringify(answer) }],
+          },
+        ],
+      };
+    },
+    async *getStreamedResponse() {
+      throw new Error("Streaming is disabled in this fixture.");
+    },
+  };
+}
+async function prepared() {
+  const e = fixture();
+  const review = new ReceiptAmountReview(e, "synthetic-demo");
+  const payload = review.preview();
+  const request = await review.approveExactPayload(payload, e, true);
+  const total = payload.candidates.find((c) => c.kind === "total")!;
+  const due = payload.candidates.find((c) => c.kind === "amount_due")!;
+  return {
+    e,
+    review,
+    payload,
+    request,
+    answer: {
+      summary: "The total and amount due may describe different things.",
+      citedSourceIds: [total.sourceId, due.sourceId],
+      possibleTotalSourceId: total.sourceId,
+      questionToCheck:
+        "Does the original show the transaction as already paid?",
+      requiresHumanReview: true,
+    },
+  };
+}
+describe("local receipt amount review", () => {
+  it.each(["TOTAL", "GRAND TOTAL"])(
+    "retains %s before lower amount due and excludes other printed amounts",
+    (label) => {
+      const lines = [
+        "SUBTOTAL $48.50",
+        "TAX $4.75",
+        `${label} $53.25`,
+        "TENDERED $60.00",
+        "CHANGE $6.75",
+        "AMOUNT DUE $0.00",
+      ];
+      const words: Word[] = lines.map((text, i) => ({
+        text,
+        page: 2,
+        x: 0.1,
+        y: i * 0.1,
+        w: 0.6,
+        h: 0.02,
+      }));
+      const extraction = parseReceipt(words, 2, "synthetic");
+      expect(extraction.fields.totalMinor).toBe("5325");
+      expect(extraction.sources.totalMinor).toEqual({
+        page: 2,
+        x: 0.1,
+        y: 0.2,
+        w: 0.6,
+        h: 0.02,
+      });
+      expect(conflictingTotals(extraction).map((x) => x.kind)).toEqual([
+        label === "TOTAL" ? "total" : "grand_total",
+        "amount_due",
+      ]);
+    },
+  );
+  it("keeps a grand total ahead of a lower total, and does not warn for equal total-like values", () => {
+    const extraction = (lines: string[]) =>
+      parseReceipt(
+        lines.map((text, i) => ({
+          text,
+          page: 1,
+          x: 0.1,
+          y: i * 0.1,
+          w: 0.6,
+          h: 0.02,
+        })),
+        1,
+        "synthetic",
+      );
+    expect(
+      extraction(["GRAND TOTAL $53.25", "TOTAL $48.50"]).fields.totalMinor,
+    ).toBe("5325");
+    expect(
+      conflictingTotals(extraction(["TOTAL $53.25", "AMOUNT DUE $53.25"])),
+    ).toEqual([]);
+    expect(conflictingTotals(null)).toEqual([]);
+    const e = fixture();
+    e.extraction = null;
+    expect(() => new ReceiptAmountReview(e, "synthetic-demo")).toThrow(
+      "two to twenty",
+    );
+  });
+  it("keeps the printed total when a later remaining amount due is zero and exposes both source regions", () => {
+    const e = fixture();
+    expect(e.extraction!.fields.totalMinor).toBe("5325");
+    expect(
+      conflictingTotals(e.extraction).map((x) => [x.kind, x.amountMinor]),
+    ).toEqual([
+      ["total", "5325"],
+      ["amount_due", "0"],
+    ]);
+    expect(e.extraction!.sources.totalMinor?.y).toBeCloseTo(0.53);
+  });
+  it("does not invent an amount for ambiguous multi-amount lines or treat subtotal as total", () => {
+    const words: Word[] = [
+      { text: "TOTAL $10.00 $20.00", page: 1, x: 0, y: 0, w: 1, h: 0.03 },
+      { text: "SUBTOTAL $9.00", page: 1, x: 0, y: 0.2, w: 1, h: 0.03 },
+    ];
+    expect(receiptAmounts(parseReceipt(words, 1, "test"))).toHaveLength(1);
+    expect(conflictingTotals(parseReceipt(words, 1, "test"))).toHaveLength(0);
+    expect(parseReceipt(words, 1, "test").fields.totalMinor).toBeUndefined();
+  });
+  it("projects only controlled labels, exact cents and per-run opaque IDs; source boxes and identities stay private", () => {
+    const e = fixture(),
+      a = new ReceiptAmountReview(e, "synthetic-demo"),
+      b = new ReceiptAmountReview(e, "synthetic-demo");
+    const p = a.preview();
+    const text = JSON.stringify(p);
+    for (const secret of [
+      e.id,
+      e.documentId,
+      e.hash,
+      e.merchant,
+      e.claimant,
+      e.purpose,
+      e.filename,
+      e.approver,
+      e.approvalReference,
+      e.expenseDate,
+      "private@example.invalid",
+    ])
+      expect(text).not.toContain(secret);
+    expect(Object.keys(p.candidates[0])).toEqual([
+      "sourceId",
+      "kind",
+      "amountMinor",
+    ]);
+    expect(p.candidates[0].sourceId).not.toBe(
+      b.preview().candidates[0].sourceId,
+    );
+    expect(JSON.stringify(a)).toBe("{}");
+    expect(a.source(p.candidates[0].sourceId, e).page).toBe(1);
+    const total = p.candidates.find((c) => c.kind === "total")!;
+    expect(a.source(total.sourceId, e)).toEqual(
+      e.extraction!.sources.totalMinor,
+    );
+    expect(() => a.source("not-a-source", e)).toThrow("Unknown");
+  });
+  it("requires exact reviewed payload and explicit consent, and rejects stale revisions or independent OCR changes", async () => {
+    const { e, review, payload } = await prepared();
+    await expect(review.approveExactPayload(payload, e, false)).rejects.toThrow(
+      "confirm",
+    );
+    const changed = structuredClone(payload);
+    changed.candidates[0].amountMinor = "1";
+    await expect(review.approveExactPayload(changed, e, true)).rejects.toThrow(
+      "exact",
+    );
+    const current = structuredClone(e);
+    current.extraction!.at = "later";
+    await expect(
+      review.approveExactPayload(payload, current, true),
+    ).rejects.toThrow("changed");
+    await expect(review.approveExactPayload(payload, e, true)).rejects.toThrow(
+      "changed",
+    );
+    const next = new ReceiptAmountReview(e, "synthetic-demo");
+    await expect(
+      next.approveExactPayload(next.preview(), { ...e, revision: 2 }, true),
+    ).rejects.toThrow("changed");
+  });
+});
+describe("real SDK runner with synthetic model only", () => {
+  it("does not call a model when total-like amounts agree", async () => {
+    const e = fixture();
+    e.extraction = parseReceipt(
+      e.extraction!.words.map((w) => ({
+        ...w,
+        text: w.text === "AMOUNT DUE $0.00" ? "AMOUNT DUE $53.25" : w.text,
+      })),
+      1,
+      "synthetic",
+    );
+    const review = new ReceiptAmountReview(e, "synthetic-demo");
+    const request = await review.approveExactPayload(review.preview(), e, true);
+    const model = mockModel({});
+    expect((await runReceiptAmountAgent(request, model)).status).toBe(
+      "not-needed",
+    );
+    expect(model.calls).toHaveLength(0);
+  });
+  it("invokes the pinned SDK once with no tools, tracing or stored response and returns source-cited advice without mutating records", async () => {
+    const { e, request, answer } = await prepared();
+    const original = structuredClone(e),
+      model = mockModel(answer);
+    const network = vi
+      .spyOn(globalThis, "fetch")
+      .mockRejectedValue(new Error("Network prohibited in test"));
+    try {
+      expect(await runReceiptAmountAgent(request, model)).toEqual({
+        status: "advice",
+        advice: answer,
+      });
+      expect(network).not.toHaveBeenCalled();
+    } finally {
+      network.mockRestore();
+    }
+    expect(model.calls).toHaveLength(1);
+    expect(model.calls[0].tracing).toBe(false);
+    expect(model.calls[0].modelSettings.store).toBe(false);
+    expect(model.calls[0].tools).toEqual([]);
+    expect(model.calls[0].handoffs).toEqual([]);
+    expect(JSON.stringify(model.calls[0].input)).not.toContain("PRIVATE");
+    expect(e).toEqual(original);
+  });
+  it("blocks unconfirmed, tampered or extra-field requests before any model invocation", async () => {
+    const { request, answer } = await prepared();
+    const model = mockModel(answer);
+    await expect(
+      runReceiptAmountAgent({ ...request, operatorConfirmed: false }, model),
+    ).rejects.toThrow("unconfirmed");
+    const changed = structuredClone(request);
+    changed.payload.candidates[0].amountMinor = "1";
+    await expect(runReceiptAmountAgent(changed, model)).rejects.toThrow(
+      "changed",
+    );
+    await expect(
+      runReceiptAmountAgent(
+        { ...request, payload: { ...request.payload, claimant: "PRIVATE" } },
+        model,
+      ),
+    ).rejects.toThrow("Invalid");
+    expect(
+      amountPayloadSchema.safeParse({ ...request.payload, originals: [] })
+        .success,
+    ).toBe(false);
+    expect(model.calls).toHaveLength(0);
+  });
+  it("rejects invented citations, non-total recommendations and decision/action fields", async () => {
+    const { request, answer, payload } = await prepared();
+    for (const invalid of [
+      { ...answer, citedSourceIds: ["made-up"] },
+      {
+        ...answer,
+        possibleTotalSourceId: payload.candidates.find((x) => x.kind === "tax")!
+          .sourceId,
+      },
+      { ...answer, approved: true },
+    ])
+      expect(
+        (await runReceiptAmountAgent(request, mockModel(invalid))).status,
+      ).toBe("unavailable");
+  });
+  it("handles provider failure/refusal without exposing raw errors or changing the receipt", async () => {
+    const { request, answer } = await prepared();
+    const model = mockModel(answer);
+    model.getResponse = async () => {
+      throw new Error("PRIVATE body or secret");
+    };
+    const result = await runReceiptAmountAgent(request, model);
+    expect(result.status).toBe("unavailable");
+    expect(JSON.stringify(result)).not.toContain("PRIVATE");
+  });
+});

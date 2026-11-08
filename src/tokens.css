@@ -1,0 +1,15 @@
+:root {
+  --font: Inter, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  --mono: "SFMono-Regular", Consolas, monospace;
+  --bg: #f7f6f2;
+  --paper: #ffffff;
+  --ink: #17213a;
+  --muted: #596375;
+  --teal: #2447db;
+  --line: #dce1e9;
+  --navy: #17213a;
+  --cobalt: #2447db;
+  --terracotta: #b54a31;
+  --pale-blue: #edf1ff;
+  --line-strong: #cbd2df;
+}

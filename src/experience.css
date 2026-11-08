@@ -1,0 +1,650 @@
+/* Focused A refinement: readable evidence, visible custody, current task state. */
+body {
+  font-size: 14px;
+}
+.activity-filter {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  min-width: 220px;
+  max-width: 300px;
+  color: var(--muted);
+  font-size: 12px;
+}
+@media (max-width: 760px) {
+  .reimbursement-row {
+    display: grid;
+    grid-template-columns: 36px minmax(0, 1fr);
+    gap: 12px;
+    align-items: start;
+    padding: 18px 16px;
+  }
+  .reimbursement-row > .avatar {
+    grid-column: 1;
+    grid-row: 1;
+  }
+  .reimbursement-row > .grow {
+    grid-column: 2;
+    grid-row: 1;
+    min-width: 0;
+  }
+  .reimbursement-row > .grow small {
+    overflow-wrap: anywhere;
+  }
+  .reimbursement-row > .amount {
+    grid-column: 2;
+    grid-row: 2;
+    justify-self: start;
+  }
+  .reimbursement-row > .button {
+    grid-column: 2;
+    grid-row: 3;
+    justify-self: start;
+    min-height: 40px;
+  }
+  .activity-filter {
+    min-width: 0;
+    max-width: none;
+    width: 100%;
+  }
+}
+.allocation-card small,
+.allocation-heading,
+.allocation-heading > span,
+.allocation-amount > span,
+.allocation-warning,
+.inline-note.subtle,
+.fund-card p,
+.fund-card-heading > span,
+.fund-amount > span,
+.fund-card-foot,
+.fund-period,
+.stat-row span {
+  font-size: 12px;
+  color: var(--muted);
+}
+.allocation-heading {
+  margin-bottom: 0;
+}
+.allocation-total {
+  font-size: 13px;
+}
+.sidebar nav button,
+.avatar.small,
+.breadcrumb,
+.queue-summary small,
+.document-toolbar,
+.document-toolbar .toolbar-actions span,
+.search-field kbd,
+.money-input > span,
+.field-divider > span,
+.table-scroll th,
+.table-scroll td small {
+  color: var(--muted);
+}
+.badge.green {
+  color: var(--teal);
+}
+.document-toolbar .toolbar-actions span,
+.search-field kbd,
+.field-divider > span,
+.table-scroll td small {
+  font-size: 12px;
+}
+.receipts-page {
+  position: relative;
+}
+.guide-toggle-label {
+  display: none;
+}
+.workspace-guide:not([open]) summary strong,
+.workspace-guide:not([open]) summary > span:not(.guide-toggle-label) {
+  display: none;
+}
+.workspace-guide:not([open]) summary .guide-toggle-label {
+  display: inline;
+  color: var(--teal);
+  font-weight: 600;
+}
+.task-context summary {
+  cursor: pointer;
+  font-size: 13px;
+}
+.task-context summary strong {
+  display: inline;
+}
+.desktop-recovery-context > summary {
+  cursor: pointer;
+  margin: 18px 0;
+  font-size: 14px;
+  color: var(--ink);
+}
+@media (min-width: 1100px) {
+  .workspace-guide:not([open]) {
+    position: absolute;
+    top: 28px;
+    right: 170px;
+    border: 0;
+    background: transparent;
+    margin: 0;
+  }
+  .workspace-guide:not([open]) summary {
+    padding: 6px 8px;
+  }
+}
+.receipt-page-heading p,
+.section-intro p,
+.privacy-promise p,
+.queue-item p,
+.review-scroll small,
+.save-state,
+.document-footer,
+.receipt-tip,
+.queue-footer,
+.history-disclaimer,
+.engine-detail,
+.sidebar-bottom small,
+.workspace-card span,
+.local-status,
+.sample-banner,
+.report-unit-note,
+.recovery-card small {
+  color: var(--muted);
+}
+.queue-item-bottom,
+.queue-summary small,
+.review-heading .eyebrow,
+.document-toolbar,
+.document-footer,
+.receipt-tip,
+.save-state,
+.privacy-promise p,
+.queue-footer,
+.operator small,
+.workspace-card span,
+.sidebar nav button,
+.local-status,
+.breadcrumb,
+.badge,
+.table-scroll th,
+.timeline-event small,
+.history-disclaimer {
+  font-size: 12px;
+}
+.queue-status {
+  color: #74541f;
+}
+.queue-item-bottom time {
+  color: var(--muted);
+}
+.badge.amber,
+.personal-banner,
+.personal-banner .sample-label,
+.personal-banner .text-button {
+  color: #74541f;
+}
+.receipt-page-heading p,
+.page-heading p,
+.section-intro p,
+.privacy-promise strong,
+.queue-item p,
+.review-scroll label small,
+.decision-step p,
+.list-row small,
+.recovery-card p,
+.guide-steps p,
+.timeline-event p,
+.history-group details .details-list {
+  font-size: 13px;
+  line-height: 1.6;
+}
+.queue-item h3,
+.queue-item-top strong,
+.section-intro h3,
+.guide-steps h3,
+.review-scroll label,
+.form-stack label,
+.review-scroll input,
+.review-scroll select,
+.review-scroll textarea,
+.table-scroll td {
+  font-size: 14px;
+}
+.review-scroll input,
+.review-scroll select,
+.review-scroll textarea {
+  min-height: 40px;
+}
+.review-scroll input[type="checkbox"] {
+  min-height: auto;
+}
+.review-tabs button,
+.review-buttons .button,
+.suggestion,
+.extract-button,
+.text-button,
+.queue-heading select,
+.queue-heading .search-field input {
+  font-size: 13px;
+}
+.suggestion > span {
+  font-size: 12px;
+  color: var(--muted);
+}
+.review-tabs button {
+  color: var(--muted);
+  min-height: 44px;
+}
+.review-tabs button.active {
+  color: var(--teal);
+}
+.review-tabs button > span {
+  font-size: 11px;
+  width: 20px;
+  height: 20px;
+}
+.sample-banner {
+  font-size: 12px;
+  line-height: 1.6;
+}
+.sample-banner > .text-button {
+  font-size: 12px;
+}
+.sample-banner .sample-label {
+  font-size: 10px;
+}
+.receipt-page-heading .eyebrow,
+.page-heading .eyebrow {
+  font-size: 11px;
+}
+.review-heading .eyebrow {
+  letter-spacing: 1px;
+  color: var(--muted);
+}
+.review-heading {
+  padding-bottom: 12px;
+}
+.review-heading h2 {
+  font-size: 18px;
+}
+.review-column {
+  width: 380px;
+}
+.section-intro h3 {
+  font-size: 16px;
+}
+.review-scroll {
+  padding: 20px 22px;
+}
+.review-actions {
+  padding: 14px 20px;
+  gap: 10px;
+}
+.review-buttons .button {
+  min-height: 40px;
+}
+.local-pill {
+  font-size: 9px;
+  color: var(--teal);
+}
+button:focus-visible,
+summary:focus-visible,
+a:focus-visible {
+  outline: 2px solid var(--teal);
+  outline-offset: 3px;
+}
+.workspace-guide {
+  border: 1px solid var(--line-strong);
+  border-radius: 8px;
+  background: #fff;
+  margin-bottom: 16px;
+  flex-shrink: 0;
+}
+.workspace-guide summary {
+  padding: 12px 16px;
+  cursor: pointer;
+  color: var(--teal);
+  font-size: 13px;
+}
+.workspace-guide summary strong {
+  margin-right: 16px;
+}
+.workspace-guide summary > span {
+  color: var(--muted);
+  font-size: 12px;
+}
+.workspace-guide-content {
+  border-top: 1px solid var(--line);
+  padding: 16px;
+}
+.workspace-guide ol {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 24px;
+  margin: 0 0 16px;
+  padding-left: 20px;
+}
+.workspace-guide li {
+  padding-left: 4px;
+  font-size: 13px;
+}
+.workspace-guide li::marker {
+  color: var(--teal);
+  font-weight: 600;
+}
+.workspace-guide li p {
+  margin-top: 5px;
+  line-height: 1.6;
+}
+.workspace-guide-footer {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  border-top: 1px solid var(--line);
+  padding-top: 12px;
+}
+.workspace-guide-footer p {
+  flex: 1;
+  font-size: 12px;
+}
+.workspace-guide-footer button {
+  flex-shrink: 0;
+}
+.task-context {
+  margin: 0 20px 14px;
+  border-left: 3px solid var(--teal);
+  padding: 8px 11px;
+  background: #f2f6ee;
+}
+.task-context strong {
+  display: block;
+  font-size: 13px;
+}
+.task-context p {
+  margin-top: 4px;
+  font-size: 12px;
+  line-height: 1.6;
+}
+.source-link {
+  font-size: 12px;
+  min-height: 32px;
+  text-align: left;
+  max-width: 100%;
+}
+.source-return-bar {
+  position: sticky;
+  top: 0;
+  z-index: 4;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 10px 14px;
+  border-bottom: 1px solid var(--line-strong);
+  background: #eef3e9;
+  font-size: 12px;
+}
+.source-return-bar button {
+  min-height: 32px;
+}
+.allocation-feedback {
+  color: var(--ink);
+  font-size: 13px;
+  margin: 10px 0 16px;
+}
+.review-error {
+  border-left: 3px solid #9d382d;
+  padding: 8px 10px;
+  background: #fff2ee;
+  color: #852d24;
+  font-size: 13px;
+}
+.workflow-note {
+  padding: 16px 20px;
+  border: 1px solid var(--line-strong);
+  border-radius: 8px;
+  background: #f2f6ee;
+  margin-bottom: 22px;
+}
+.workflow-note strong {
+  display: block;
+  margin-bottom: 5px;
+}
+.workflow-note p {
+  font-size: 13px;
+  line-height: 1.6;
+}
+.recipient-summary {
+  margin: 0 22px 20px;
+  padding: 20px;
+  border: 1px solid var(--line-strong);
+  border-radius: 8px;
+  background: #f4f7f0;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(190px, 260px);
+  gap: 16px 24px;
+}
+.recipient-summary .eyebrow {
+  font-size: 10px;
+  color: var(--muted);
+}
+.recipient-summary h3 {
+  margin: 5px 0 8px;
+  font-size: 17px;
+}
+.recipient-summary p {
+  font-size: 13px;
+  line-height: 1.6;
+}
+.recipient-summary > small {
+  grid-column: 1 / -1;
+  font-size: 12px;
+}
+.report-totals {
+  margin: 0;
+  display: grid;
+  gap: 10px;
+}
+.report-totals div {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 16px;
+}
+.report-totals dt {
+  color: var(--muted);
+  font-size: 12px;
+}
+.report-totals dd {
+  margin: 0;
+  font-size: 15px;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+.report-totals div:first-child {
+  display: block;
+}
+.report-totals div:first-child dd {
+  font-size: 28px;
+  color: var(--teal);
+}
+.report-unit-note {
+  font-size: 13px;
+}
+.browser-custody {
+  padding: 24px;
+  margin-bottom: 22px;
+  border-left: 3px solid var(--teal);
+}
+.browser-custody .eyebrow {
+  color: var(--muted);
+  font-size: 11px;
+}
+.browser-custody h2 {
+  margin: 8px 0;
+}
+.browser-custody p {
+  max-width: 740px;
+  line-height: 1.7;
+}
+.browser-custody button {
+  margin: 18px 0 12px;
+}
+.browser-custody > small {
+  display: block;
+  max-width: 740px;
+  font-size: 12px;
+}
+@media (max-width: 1200px) and (min-width: 761px) {
+  .review-column {
+    width: 345px;
+  }
+  .receipt-queue {
+    width: 185px;
+  }
+  .workspace-guide summary > span {
+    display: none;
+  }
+}
+@media (max-width: 760px) {
+  .review-column {
+    width: 100%;
+  }
+  .receipt-page-heading p {
+    font-size: 13px;
+  }
+  .workspace-guide summary {
+    padding: 12px;
+  }
+  .workspace-guide summary strong {
+    display: inline;
+    margin-right: 0;
+  }
+  .workspace-guide summary > span {
+    display: block;
+    margin-top: 4px;
+  }
+  .workspace-guide ol {
+    grid-template-columns: 1fr;
+    gap: 14px;
+  }
+  .workspace-guide-footer {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+  .sample-banner {
+    font-size: 12px;
+    gap: 10px;
+  }
+  .sample-banner .sample-label {
+    font-size: 10px;
+  }
+  .sample-banner > .text-button {
+    font-size: 12px;
+    max-width: 105px;
+  }
+  .breadcrumb {
+    font-size: 12px;
+  }
+  .app-header .button {
+    font-size: 12px;
+    min-height: 40px;
+  }
+  .queue-item-bottom {
+    font-size: 12px;
+    flex-wrap: wrap;
+    gap: 6px;
+  }
+  .queue-item p {
+    overflow-wrap: anywhere;
+  }
+  .review-tabs button,
+  .review-buttons .button {
+    font-size: 13px;
+  }
+  .review-scroll input,
+  .review-scroll select,
+  .review-scroll textarea {
+    font-size: 16px;
+  }
+  .task-context {
+    margin-bottom: 16px;
+  }
+  .source-return-bar {
+    display: block;
+  }
+  .source-return-bar > span {
+    display: block;
+    margin-bottom: 5px;
+  }
+  .recipient-summary {
+    grid-template-columns: 1fr;
+    margin: 0 14px 18px;
+    padding: 16px;
+  }
+  .report-totals {
+    border-top: 1px solid var(--line-strong);
+    padding-top: 14px;
+  }
+  .workflow-note {
+    padding: 16px;
+  }
+  .browser-custody {
+    padding: 20px;
+  }
+  .browser-custody button {
+    width: 100%;
+    white-space: normal;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    scroll-behavior: auto !important;
+  }
+}
+@media (min-width: 761px) and (max-height: 800px) {
+  .review-heading {
+    padding: 12px 18px 8px;
+  }
+  .task-context {
+    padding: 6px 10px;
+    margin: 0 18px 8px;
+  }
+  .review-scroll {
+    padding: 14px 20px;
+  }
+  .review-scroll .section-intro {
+    margin-bottom: 12px;
+  }
+  .review-scroll .section-intro p {
+    display: none;
+  }
+  .extract-button {
+    margin-bottom: 14px;
+  }
+  .review-actions {
+    padding: 10px 18px;
+    gap: 6px;
+  }
+}
+@media (max-width: 760px) {
+  .sidebar nav button:last-child {
+    display: flex;
+  }
+  .suggestion {
+    display: block;
+    text-align: left;
+  }
+  .suggestion > span {
+    display: block;
+    margin-top: 3px;
+  }
+  .suggestion > svg {
+    display: inline;
+    vertical-align: middle;
+    margin-right: 5px;
+  }
+}

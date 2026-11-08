@@ -1,0 +1,41 @@
+{
+  "name": "fundthread",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "vite --host 127.0.0.1",
+    "build": "tsc -b && vite build",
+    "test": "vitest run",
+    "tauri": "tauri",
+    "desktop": "tauri dev",
+    "desktop:build": "tauri build",
+    "predev": "node scripts/prepare-assets.mjs",
+    "prebuild": "node scripts/prepare-assets.mjs",
+    "test:browser": "playwright test",
+    "format": "prettier --write src tests scripts *.ts",
+    "build:browser": "tsc -b && vite build --mode browser --outDir browser-dist",
+    "prebuild:browser": "node scripts/prepare-assets.mjs",
+    "preview:browser": "vite preview --mode browser --outDir browser-dist --host 127.0.0.1 --port 1421 --strictPort"
+  },
+  "dependencies": {
+    "@tauri-apps/api": "2.12.4",
+    "lucide-react": "1.70.0",
+    "pdf-lib": "1.17.1",
+    "pdfjs-dist": "6.5.438",
+    "react": "19.3.1",
+    "react-dom": "19.3.1",
+    "tesseract.js": "7.0.0"
+  },
+  "devDependencies": {
+    "@playwright/test": "1.65.0",
+    "@tauri-apps/cli": "2.12.4",
+    "@types/react": "19.3.0",
+    "@types/react-dom": "19.3.0",
+    "@vitejs/plugin-react": "6.2.1",
+    "prettier": "3.9.10",
+    "typescript": "7.0.2",
+    "vite": "8.3.6",
+    "vitest": "4.1.12"
+  }
+}

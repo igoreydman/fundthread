@@ -1,0 +1,117 @@
+{
+  "date": "2026-11-08",
+  "recordedAt": "2026-11-08T18:34:19.960839+00:00",
+  "status": "implemented_and_verified_in_code",
+  "storage": "PostgreSQL desktop; browser remains in-memory",
+  "normalization": "3NF typed/versioned operational relations; opaque OCR artifact JSONB retained once per run",
+  "schemaVersion": 1,
+  "schemaNamespace": "fundthread",
+  "tenancy": "One organization/workspace per PostgreSQL database",
+  "apiFreeze": {
+    "snapshot": "storageEngine:string replaces cipherVersion",
+    "create": "create(organization,operator)",
+    "unlock": "unlock()",
+    "removed": [
+      "backup_workspace",
+      "restore_workspace",
+      "api.backup",
+      "api.restore"
+    ],
+    "credentialSource": "FUNDTHREAD_DATABASE_URL in native process environment"
+  },
+  "passed": {
+    "postgresIntegration": 16,
+    "pureUnit": 3,
+    "nativeExportSafeguards": 3,
+    "nativeCargoCheck": true,
+    "coreAndLegacyCompileCheck": true,
+    "frontendBuildAtApiFreeze": true,
+    "queryPlanExperiment": {
+      "postgres": "18.0",
+      "syntheticClaims": 10000,
+      "funds": 100,
+      "payments": 10000,
+      "extractionArtifacts": 30000,
+      "result": "Expected hash/allocation/payment/extraction/history/order indexes selected; approval relation sequential scan was also selected",
+      "evidence": "../../output/fundthread-experience-polish-2026-11-08/postgres-query-plans.txt"
+    }
+  },
+  "dataMigration": "Source-retaining SQLCipher import tested with synthetic data; no existing user vault imported/deleted or live DB cutover",
+  "recovery": "Real pg_dump/pg_restore into separate empty DB passed; existing files/DBs refused; malformed archives rolled back; legacy inconsistency rollback tested before commit",
+  "limits": [
+    "No new packaged native UI operation or notarized/signed distribution",
+    "No Windows run",
+    "No remote/private-CA TLS integration run",
+    "No hosted service provisioned",
+    "No app authentication/RBAC",
+    "No automatic database/dump encryption",
+    "Coarse workspace transaction write lock favors correctness over write throughput",
+    "Full snapshots still load all claims; pagination/batched queries remain a scaling improvement"
+  ],
+  "fingerprints": [
+    {
+      "path": "crates/core/Cargo.toml",
+      "sha256": "12190ad11a85b14b5e5ab5c894a302c7136f5f7c0a93ba5ff2cbf5f8146cd97f"
+    },
+    {
+      "path": "crates/core/src/lib.rs",
+      "sha256": "53c56851f4525630842de28b09c2938a79560fc1a8c0c343f538a60ff5571700"
+    },
+    {
+      "path": "crates/core/src/types.rs",
+      "sha256": "bea6e85644a24493e952820958f0f42a95e6ebfd4e8c549d349f96df27ff01d1"
+    },
+    {
+      "path": "crates/core/src/legacy.rs",
+      "sha256": "9d7a790ab1181633e258fbf693c3371f8fe64ce76ba5e9376263ecfc4a985483"
+    },
+    {
+      "path": "crates/core/src/migration.rs",
+      "sha256": "1957199bbccb59b821afb28b4c78aab192c5997d9adb49a1d53aaf531da9c86d"
+    },
+    {
+      "path": "crates/core/src/bin/import-sqlcipher.rs",
+      "sha256": "f005e60d59d02cdee9f56207555d1780d3d9e224f1e20bf13729a7dc96084f53"
+    },
+    {
+      "path": "crates/core/src/bin/fundthread-db.rs",
+      "sha256": "71a9f99659a652edaa09fabf8e137258d60485170124dd480df2e0f8b6bc6de4"
+    },
+    {
+      "path": "crates/core/migrations/0001_postgres.sql",
+      "sha256": "856ae3cb8777e464446e5d9faa45e73a09b41abb90f7499a1e42491a6b823bcd"
+    },
+    {
+      "path": "crates/core/tests/postgres.rs",
+      "sha256": "b26c87f2f8bc2c830401e50095db8801b5b3c752884b7228de2227aec8dc28eb"
+    },
+    {
+      "path": "src-tauri/src/main.rs",
+      "sha256": "0dc069c1c40a85a3075f2f4930552c2ebf028e8738f10c9d1a85657910e558ee"
+    },
+    {
+      "path": "src-tauri/build.rs",
+      "sha256": "92a3c70d6d57eee0e8f78bb018f3adee8ad98896ffa68b3155814d33923d18f9"
+    },
+    {
+      "path": "src-tauri/permissions/workspace.toml",
+      "sha256": "0b25e8d8819c06ca2549cbd71b9b7ed6dc73e95514d78905d2199a48eb6486b7"
+    },
+    {
+      "path": "scripts/explain-postgres.sql",
+      "sha256": "d0c555709141e53eb04cfa4c917f8389d04146c19dc225ccda15490a2a4414d8"
+    },
+    {
+      "path": "docs/database-design.md",
+      "sha256": "3245e699e181060cabeab27b7d63d257c0b137e44fe7f9c11ade539f5e0f70da"
+    },
+    {
+      "path": "docs/postgres-operations.md",
+      "sha256": "016b0185e86b420b58744ee6616cf1d56bff46cc3f8a75bb52b906c01ba16ed1"
+    },
+    {
+      "path": ".env.example",
+      "sha256": "1b47dd1bb809692aa4c4eff1173109699f58f1dfe5123bbeccd3a7900212d76b"
+    }
+  ]
+}

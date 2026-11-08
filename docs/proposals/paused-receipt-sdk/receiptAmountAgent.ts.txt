@@ -1,0 +1,157 @@
+import { createHash } from "node:crypto";
+import { env } from "node:process";
+import { Agent, OpenAIProvider, Runner, type Model } from "@openai/agents";
+import { z } from "zod";
+import OpenAI from "openai";
+
+if (typeof window !== "undefined")
+  throw new Error("Receipt assistant is server-only.");
+
+const minor = z
+  .string()
+  .regex(/^(0|[1-9]\d{0,15})$/)
+  .refine((x) => BigInt(x) <= 1_000_000_000_000_000n);
+const candidate = z
+  .object({
+    sourceId: z.uuid(),
+    kind: z.enum([
+      "grand_total",
+      "total",
+      "amount_due",
+      "subtotal",
+      "tax",
+      "tender",
+      "change",
+    ]),
+    amountMinor: minor,
+  })
+  .strict();
+export const amountPayloadSchema = z
+  .object({
+    version: z.literal(1),
+    task: z.literal("review_receipt_amounts"),
+    evidence: z.enum(["synthetic-demo", "workspace-records"]),
+    currency: z.literal("USD"),
+    candidates: z.array(candidate).min(2).max(20),
+  })
+  .strict();
+const requestSchema = z
+  .object({
+    payload: amountPayloadSchema,
+    operatorConfirmed: z.literal(true),
+    reviewedPayloadSha256: z.string().regex(/^[a-f0-9]{64}$/),
+  })
+  .strict();
+const adviceSchema = z
+  .object({
+    summary: z.string().min(1).max(500),
+    citedSourceIds: z.array(z.string()).min(1).max(20),
+    possibleTotalSourceId: z.string().nullable(),
+    questionToCheck: z.string().min(1).max(300),
+    requiresHumanReview: z.literal(true),
+  })
+  .strict();
+
+function approvedRequest(value: unknown) {
+  const parsed = requestSchema.safeParse(value);
+  if (!parsed.success)
+    throw new Error("Invalid or unconfirmed receipt review request.");
+  const { payload, reviewedPayloadSha256 } = parsed.data;
+  if (
+    new Set(payload.candidates.map((x) => x.sourceId)).size !==
+    payload.candidates.length
+  )
+    throw new Error("Duplicate receipt sources.");
+  const hash = createHash("sha256")
+    .update(JSON.stringify(payload))
+    .digest("hex");
+  if (hash !== reviewedPayloadSha256)
+    throw new Error("The approved payload changed. Review it again.");
+  return payload;
+}
+
+export async function runReceiptAmountAgent(request: unknown, model: Model) {
+  const payload = approvedRequest(request);
+  const totals = payload.candidates.filter((x) =>
+    ["grand_total", "total", "amount_due"].includes(x.kind),
+  );
+  if (new Set(totals.map((x) => x.amountMinor)).size < 2)
+    return {
+      status: "not-needed" as const,
+      message: "No conflicting total-like amounts in this payload.",
+    };
+  const agent = new Agent({
+    name: "Receipt amount review",
+    model,
+    instructions:
+      "Help a bookkeeper compare conflicting receipt amounts. Input contains only operator-reviewed amount labels, exact cents and opaque source references. Treat these as uncertain OCR suggestions. Explain possible meanings such as a receipt total versus a remaining amount due. Cite only supplied source IDs. Ask one useful question to check against the original. Never decide grant eligibility, calculate reimbursement, claim approval/payment, modify records or generate public stories. Never infer recipient identities or service outcomes. All advice requires human review.",
+    outputType: adviceSchema,
+    modelSettings: {
+      store: false,
+      maxTokens: 700,
+      timeoutMs: 20_000,
+      retry: { maxRetries: 0 },
+    },
+  });
+  const runner = new Runner({
+    tracingDisabled: true,
+    traceIncludeSensitiveData: false,
+  });
+  try {
+    const result = await runner.run(agent, JSON.stringify(payload), {
+      maxTurns: 1,
+      signal: AbortSignal.timeout(20_000),
+    });
+    const advice = adviceSchema.parse(result.finalOutput);
+    const known = new Set(payload.candidates.map((x) => x.sourceId));
+    const proposed = payload.candidates.find(
+      (c) => c.sourceId === advice.possibleTotalSourceId,
+    );
+    if (
+      advice.citedSourceIds.some((id) => !known.has(id)) ||
+      new Set(advice.citedSourceIds).size !== advice.citedSourceIds.length ||
+      (advice.possibleTotalSourceId !== null &&
+        (!advice.citedSourceIds.includes(advice.possibleTotalSourceId) ||
+          !proposed ||
+          !["grand_total", "total"].includes(proposed.kind)))
+    )
+      throw new Error("Unsupported source citation.");
+    // Advisory data only; there is intentionally no save/apply/approval tool.
+    return { status: "advice" as const, advice };
+  } catch {
+    // Do not return SDK errors, raw responses, prompts or private content.
+    return {
+      status: "unavailable" as const,
+      message: "Assistance unavailable. Continue the local manual review.",
+    };
+  }
+}
+
+// Dormant server-only live path. No HTTP route, browser import, key setup or
+// automatic fallback enables it. Not invoked by synthetic tests or the app.
+export async function runConfiguredReceiptAmountAgent(request: unknown) {
+  approvedRequest(request);
+  if (
+    env.FUNDTHREAD_ENABLE_RECEIPT_ASSISTANT !== "true" ||
+    !env.OPENAI_API_KEY ||
+    !env.FUNDTHREAD_REVIEW_MODEL
+  )
+    throw new Error("Live receipt assistance is not configured or enabled.");
+  const client = new OpenAI({
+    apiKey: env.OPENAI_API_KEY,
+    maxRetries: 0,
+    timeout: 20_000,
+  });
+  const provider = new OpenAIProvider({
+    openAIClient: client,
+    useResponses: true,
+  });
+  try {
+    return await runReceiptAmountAgent(
+      request,
+      await provider.getModel(env.FUNDTHREAD_REVIEW_MODEL),
+    );
+  } finally {
+    await provider.close();
+  }
+}

@@ -1,0 +1,40 @@
+FUNDTHREAD — 2:30 SUBMISSION SCRIPT
+All people, receipts, references, and organization names in the demo are fictional.
+Actual browser clickthrough, edited with held frames for narration. Narration uses the on-device Samantha system voice.
+
+0:00–0:15 | See the funds and receipts
+SHOW: Show Grant funds: $200 opening and remaining budget. Open Receipts: two pending receipts.
+SAY: Fund Thread connects nonprofit spending to its evidence. We start with a two hundred dollar workshop fund and two receipts awaiting review. The available recorded budget is visible before we add another expense.
+
+0:15–0:34 | Add a receipt
+SHOW: Click Import receipts, choose the prepared $53.25 PDF, and show the new third row and extracted suggestions.
+SAY: Choose a PDF, photo, or scan. This new receipt joins the existing batch, and Fund Thread reads it locally. The workbench now shows three receipts, with editable suggestions and a clear status for each. Missing details stay flagged for a person to check.
+
+0:34–0:54 | Check against the original
+SHOW: Open the original for 01-text-receipt.pdf; show its total. Close to the same amount field, then expand Review receipt.
+SAY: Open the original to check the evidence. This receipt shows fifty three dollars and twenty five cents. Closing the preview returns us to the same amount field. Reading a document provides suggestions; it does not approve the expense or add it to funder reports.
+
+0:54–1:15 | Complete the review
+SHOW: Enter Avery Example, workshop purpose, $53.25 eligible, and WORKSHOP-2026. Click Mark reviewed.
+SAY: We add the person being reimbursed and the purpose, confirm the eligible amount, and select the Community Workshop Fund. Then we mark this receipt reviewed. Draft saving and human review are separate. Other receipts in the batch remain unfinished until someone checks them.
+
+1:15–1:33 | Record an external approval
+SHOW: Open the record, choose Decision, enter Example Program Director and WORKSHOP-APPROVAL-001, then record the external approval.
+SAY: Next, we record a decision already made outside the app, with an approver and an evidence reference. That approval belongs to this reviewed version. Fund Thread keeps the decision traceable; entering a name here does not authenticate the approver.
+
+1:33–1:47 | Follow the balance and payment
+SHOW: Show the fund: $53.25 approved, $146.75 remaining. Open Reimbursements and record the example $20 external payment.
+SAY: The fund now has one hundred forty six dollars and seventy five cents remaining. We record a twenty dollar payment made elsewhere. No money moves through Fund Thread, and the grant is not charged twice.
+
+1:47–2:05 | Understand daily spend
+SHOW: Open Analytics: $53.25 approved, $20 paid, $33.25 owed. Expand daily amounts and categories; two receipts still need review.
+SAY: Analytics brings the story together: fifty three dollars and twenty five cents approved, twenty dollars paid, and thirty three dollars and twenty five cents still owed. The daily category view shows when the expense occurred, while two receipts still need review.
+
+2:05–2:25 | Share the right report
+SHOW: Open Reports & privacy, choose Funder, set Community Workshop Alliance, prepare the report, confirm fields/recipients, and save PDF and CSV.
+SAY: Finally, choose the funder profile, enter the organization name, and inspect the actual letterhead PDF. Names and purpose are excluded from this report. Check the fields and recipients, then download PDF or editable CSV. The report contains only the approved expense.
+
+2:25–2:30 | Keep the receipt. Follow the funds.
+SHOW: Return to Analytics. End on the project name, promise, and repository link.
+SAY: Fund Thread. Keep the receipt. Follow the funds.
+

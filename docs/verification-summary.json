@@ -1,0 +1,55 @@
+{
+  "date": "2026-11-08",
+  "version": "0.1.0",
+  "recorded_at": "2026-11-08T07:00:29.733428+00:00",
+  "checks": {
+    "encrypted_core": {
+      "passed": 12,
+      "scope": "prior checkpoint, Rust sources unchanged"
+    },
+    "native_export_safety": {
+      "passed": 3,
+      "scope": "prior checkpoint, Rust sources unchanged"
+    },
+    "frontend_validation": {
+      "passed": 12,
+      "scope": "current import isolation, financial validation, parsing/money and privacy export guards"
+    },
+    "browser_workflows": {
+      "passed": 9,
+      "execution": "nine passing scenarios against the production browser build; two real-file scenarios rerun successfully for trimmed fund codes and retained synthetic fixtures"
+    },
+    "builds": {
+      "browser": "passed with local OCR/PDF assets, CSP page/worker headers and generated hosting policy",
+      "macos_arm64": "passed and packaged; native UI not operated"
+    }
+  },
+  "platform": {
+    "macos_arm64": "compiled and packaged; native UI not operated by user preference",
+    "windows": "native installer configuration prepared; not built or run; browser path also awaits actual Windows verification"
+  },
+  "artifacts": [
+    {
+      "name": "FundThread-0.1.0-browser.zip",
+      "bytes": 21903955,
+      "sha256": "df8e443f13940795ed220935bf64f91b113506e87b3bb646a1d7659e157b2e76"
+    },
+    {
+      "name": "FundThread-0.1.0-macOS-arm64.zip",
+      "bytes": 25829449,
+      "sha256": "492a5be378e8077ad8ba1daaa344ff86f9626c00f904ac6d7951f928b4876023"
+    }
+  ],
+  "design_skill": {
+    "status": "pending worker availability",
+    "creation_run": "experience-forward-test-f-resume-3",
+    "creation_run_state": "running synthesis after schema retry; regression suite 93 passed",
+    "fundthread_review": "submit retried; rejected because Experience Lab pane w1:pF is busy; no accepted job or report",
+    "evidence": "docs/design-review/STATUS.md"
+  },
+  "limits": [
+    "Browser originals and records are temporary and held in tab memory.",
+    "No public deployment, repository publication or submission performed.",
+    "No independent security assessment, complete-PII detection claim or nonprofit user validation."
+  ]
+}

@@ -1,0 +1,10 @@
+{
+  "identifier": "main",
+  "description": "Only the main local application can use the typed workspace commands.",
+  "windows": ["main"],
+  "permissions": [
+    "core:event:default",
+    "workspace-commands",
+    "core:window:allow-close"
+  ]
+}

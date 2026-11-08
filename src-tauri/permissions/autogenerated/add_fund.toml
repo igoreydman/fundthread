@@ -1,0 +1,11 @@
+# Automatically generated - DO NOT EDIT!
+
+[[permission]]
+identifier = "allow-add-fund"
+description = "Enables the add_fund command without any pre-configured scope."
+commands.allow = ["add_fund"]
+
+[[permission]]
+identifier = "deny-add-fund"
+description = "Denies the add_fund command without any pre-configured scope."
+commands.deny = ["add_fund"]

@@ -1,0 +1,11 @@
+# Automatically generated - DO NOT EDIT!
+
+[[permission]]
+identifier = "allow-save-extraction"
+description = "Enables the save_extraction command without any pre-configured scope."
+commands.allow = ["save_extraction"]
+
+[[permission]]
+identifier = "deny-save-extraction"
+description = "Denies the save_extraction command without any pre-configured scope."
+commands.deny = ["save_extraction"]

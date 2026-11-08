@@ -1,0 +1,31 @@
+# Receipt amount review: bounded core checkpoint
+
+The app-visible change is local and deterministic. A printed TOTAL or GRAND TOTAL now takes precedence over a later AMOUNT DUE. Different total-like amounts produce a source-linked review notice. Clicking a source shows its region; it does not populate a field, approve a claim or record a payment. A line containing several amounts is left unresolved. OCR remains local and its output remains a suggestion.
+
+## Comparison and selected operation
+
+| Existing behavior | Bounded correction or optional assistant role |
+| --- | --- |
+| Parser chose the last total-like line, potentially a zero remaining balance | Deterministic label priority, ambiguity handling and visible conflicting sources fix this directly; no model needed |
+| Bookkeeper still has to interpret why printed totals differ | A read-only assistant may suggest a possible meaning and one question to check against the original; this is a hypothesis about usefulness, not validated nonprofit usability |
+| Financial validation and external decisions already have defined rules | They remain deterministic and human-controlled; the assistant has no write tools, approval authority, fund mutation or payment operation |
+
+The chosen SDK operation is receipt-amount discrepancy review, not general chat, rewritten OCR, campaign copy, public storytelling or a report-generation pivot. `ReceiptAmountReview` prepares a local preview containing only controlled amount labels, exact cents, opaque per-run source IDs and a provenance label. Raw OCR, receipt bytes, identity fields, free-text context, dates, filenames, internal record IDs and source boxes are excluded. Boxes remain in the local source map. Amounts can still be identifying: this projection does not promise anonymization.
+
+## Implementation and proof boundary
+
+`server/receiptAmountAgent.ts` contains an actual `Agent`/`Runner` invocation using pinned `@openai/agents` 0.21.0, `openai` 7.53.0 and `zod` 4.6.7. Tests run the actual SDK loop with a synthetic custom Model; the SDK itself is not mocked. No paid or live model call was made.
+
+The server boundary requires explicit confirmation and a matching SHA-256 of the exact reviewed payload. Strict schemas reject extra identity fields, changed payloads and duplicate source IDs before model invocation. Agreement among total-like amounts skips the model. The runner has no tools or handoffs, allows one turn, disables tracing/content traces and requests `store:false`, a token limit and timeout. The dormant configured provider additionally requires an explicit enable flag, server-side key and model setting, with transport retries disabled. No credentials were configured or read for a live call.
+
+Known-source validation rejects invented references and non-total recommendations. It does **not** prove that free-text explanations or numeric claims are factually correct. Advice remains untrusted and requires human inspection; this checkpoint does not render model text in the app or apply suggested values. A future UI must render financial values from known source data and distinguish those values from unverified model prose. `store:false` and disabled tracing do not guarantee zero provider retention.
+
+The local source guard detects revision or extraction changes in the Expense supplied by the caller and permanently rejects the old preparation. It does not establish an atomic native-vault check or workspace lifecycle binding. A future adapter must obtain current authoritative state, bind consent to the active workspace, and discard late/stale responses. The payload hash binds content; it does not authenticate an operator or prove that a person reviewed a screen.
+
+There is **no HTTP route, frontend assistant connection, deployed service or live API/SDK model proof**. The visible notice works without any server. The existing archive and reimbursement workflows do not depend on this dormant path. API secrets and server SDK code are absent from the generated browser JS. Existing packaged ZIPs predate this source checkpoint.
+
+## Synthetic evidence
+
+`server/fixtures/receipt-amounts.synthetic.json` is an explicitly synthetic payload, not an approved request and not a record from a nonprofit. Tests prepare confirmation separately. Focused tests cover total/grand-total precedence, subtotal/tax/tender exclusion, equal and absent totals, ambiguous lines, source-region mapping, identity exclusion, stale evidence, exact confirmation, rejected extra fields/citations/actions, no-network SDK execution and sanitized failure. The original tests continue to exercise the existing core.
+
+Official documentation consulted: [agent definitions](https://developers.openai.com/api/docs/guides/agents/define-agents), [human review](https://developers.openai.com/api/docs/guides/agents/guardrails-approvals), [tracing](https://developers.openai.com/api/docs/guides/agents/integrations-observability). Installed SDK types were checked before implementing its settings and custom model interface. The paused public-fact/story draft remains untouched outside runtime.

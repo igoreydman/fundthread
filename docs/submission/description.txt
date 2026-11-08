@@ -1,0 +1,15 @@
+FundThread — Keep the receipt. Follow the funds.
+
+Nonprofit teams need to explain how restricted grant dollars were spent, but receipts, reimbursement decisions, payment records, and funder reports often live in separate places. A simple question — “How much is left, and what supports that number?” — becomes a search across documents and spreadsheets. Sharing the evidence can also expose personal information that a funder does not need.
+
+FundThread connects that work in one receipt-first workspace. Staff see the recorded budget and remaining amount for each fund, add PDF or image receipts in a batch, and check locally extracted details against the preserved original. Drafts save automatically, but a person explicitly reviews the expense, assigns eligible amounts to funds, and records the reference for an external approval. Payments and bank reconciliation remain separate from approval and grant usage.
+
+The working demo follows a complete example: a $200 workshop fund, two pending receipts, and one newly uploaded $53.25 receipt. After review and external approval, the fund shows $146.75 remaining. Recording a $20 external payment leaves $33.25 owed without charging the fund twice. Daily Analytics shows the approved expense, category, payments, outstanding amount, and the two receipts still needing review.
+
+Reporting starts with the intended recipient. The funder profile omits claimant names, merchants, purpose, and approval identities; the bookkeeper profile includes detailed fields. Staff preview the report, check its fields and recipients, then export exact-dollar CSV or an organization-letterhead PDF. Receipt-copy tools can burn selected privacy masks into a new PDF while preserving the original. Minimal reports still contain IDs, dates, amounts, and fund codes, so they are not anonymous.
+
+Built with React, TypeScript, Vite, PDF.js, Tesseract.js, pdf-lib, and a Tauri/Rust desktop core backed by PostgreSQL. English OCR assets are bundled and document reading runs locally. The browser demo needs no account, database, or API key; its workspace lasts only for the tab. Persistent desktop records use an organization-managed PostgreSQL database.
+
+This is a working hackathon prototype, not a banking or approver-authentication service. It records decisions and payments made elsewhere. OCR and privacy suggestions require human review. PDFs contain rendered page images; CSV provides editable data. All demo organizations, people, receipts, and references are fictional.
+
+Run instructions, source code, and the MIT license are in the public repository: https://github.com/igoreydman/fundthread

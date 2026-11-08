@@ -1,0 +1,9 @@
+PAUSED — speculative scope, not an accepted FundThread feature.
+
+The coordinator relayed a user clarification on November 8, 2026: the brainstorming alternatives did not know about FundThread, so their applicability has not been established. The public-fact/story extension is paused and must not be treated as accepted product scope.
+
+publicFacts.ts.txt preserves one unfinished implementation draft. It has not been compiled, tested, imported, exposed in the UI, connected to storage, or used for any data transfer. It was moved out of src so it cannot enter the application build. No tests were running when the pause arrived; none were started afterward. No public-story generation, network/SDK call, credential setup, deployment or publication occurred. No commit was made.
+
+Do not promote this draft into the application or infer native/browser parity. It has no atomic native-vault revision guard or workspace lifecycle integration. Its contracts, validation and privacy properties remain unverified.
+
+Active product focus remains reimbursement, fund allocation, external decision/payment records and audience-specific reporting. A core-value OpenAI API/Agents SDK workflow still needs a grounded choice; the speculative story proposal is not that choice.

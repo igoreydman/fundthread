@@ -1,0 +1,18 @@
+{
+  "version": 1,
+  "task": "review_receipt_amounts",
+  "evidence": "synthetic-demo",
+  "currency": "USD",
+  "candidates": [
+    {
+      "sourceId": "11111111-1111-4111-8111-111111111111",
+      "kind": "total",
+      "amountMinor": "5325"
+    },
+    {
+      "sourceId": "22222222-2222-4222-8222-222222222222",
+      "kind": "amount_due",
+      "amountMinor": "0"
+    }
+  ]
+}

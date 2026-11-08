@@ -1,0 +1,5 @@
+"claim_id","revision","expense_date","fund_code","currency","approved_allocation_minor","payment_status"
+"ft-1042","1","2026-10-22","SF-2026","USD","14000","partially paid"
+"ft-1042","1","2026-10-22","CC-2026","USD","4475","partially paid"
+"ft-1040","1","2026-10-22","CC-2026","USD","4815","partially paid"
+"ft-1039","1","2026-10-22","SF-2026","USD","14000","paid"

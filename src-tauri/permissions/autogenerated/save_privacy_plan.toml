@@ -1,0 +1,11 @@
+# Automatically generated - DO NOT EDIT!
+
+[[permission]]
+identifier = "allow-save-privacy-plan"
+description = "Enables the save_privacy_plan command without any pre-configured scope."
+commands.allow = ["save_privacy_plan"]
+
+[[permission]]
+identifier = "deny-save-privacy-plan"
+description = "Denies the save_privacy_plan command without any pre-configured scope."
+commands.deny = ["save_privacy_plan"]

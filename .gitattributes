@@ -1,0 +1,13 @@
+* text=auto eol=lf
+*.png -text
+*.pdf -text
+*.wasm -text
+*.traineddata -text
+*.icns -text
+*.ico -text
+*.ttf -text
+*.otf -text
+*.bcmap -text
+*.pfb -text
+public/**/LICENSE* -text -whitespace
+docs/examples/*.csv text eol=crlf whitespace=cr-at-eol
