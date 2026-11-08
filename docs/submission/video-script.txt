@@ -1,6 +1,6 @@
 FUNDTHREAD — 2:30 SUBMISSION SCRIPT
 All people, receipts, references, and organization names in the demo are fictional.
-Actual browser clickthrough, edited with held frames for narration. Narration uses the on-device Samantha system voice.
+Actual browser clickthrough, edited with held frames for narration. Final narration uses Gemini 3.8 Flash TTS: Fola for the main script and Rami for the closing line.
 
 0:00–0:15 | See the funds and receipts
 SHOW: Show Grant funds: $200 opening and remaining budget. Open Receipts: two pending receipts.
