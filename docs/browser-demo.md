@@ -2,7 +2,11 @@
 
 The browser demo is a functioning receipt-to-report workflow. A visitor can explore fictional Tidepath records or import actual PDF, JPEG and PNG files into a separate empty session. Uploaded originals are held in this tab's memory. The application does not upload receipt contents to a server or create an encrypted browser archive.
 
+Without local setup, [open the public browser demo](https://fundthread.tarpit-ai.chatgpt.site) or [watch the video on YouTube](https://youtu.be/EU2lbzVB3sE). The hosted demo uses the same temporary browser workspace described above.
+
 ## Start and serve
+
+Install Node.js 22.12+ and npm, then run these commands from the repository folder:
 
 ```sh
 npm ci --cache .local/npm-cache
@@ -10,13 +14,15 @@ npm run build:browser
 npm run preview:browser
 ```
 
-Open `http://127.0.0.1:1421`. Use a modern browser with WebAssembly, Web Workers, Canvas and Web Crypto. The tested browser is Chromium 154 on macOS arm64; other browser/device combinations still need their own run. The browser path avoids a native Windows installation, but Windows browser operation has not been tested on this Mac.
+Keep the terminal running and wait for Vite to report that the preview server is ready. Then open `http://127.0.0.1:1421/` on the same computer. This is a local server address; it only works after starting the preview. On subsequent runs, start it again with `npm run preview:browser`. If port 1421 is occupied, stop the other server or run `npm run preview:browser -- --port 1422` and use the address Vite prints.
+
+Use a modern browser with WebAssembly, Web Workers, Canvas and Web Crypto. The tested browser is Chromium 154 on macOS arm64; other browser/device combinations still need their own run. The browser path avoids a native Windows installation, but Windows browser operation has not been tested on this Mac.
 
 For public hosting, serve the contents of `browser-dist/` from an HTTPS site's root. Retain the `ocr/`, `pdf/`, `licenses/` and hashed `assets/` directories. Do not open `index.html` with a `file://` URL. The build uses root-relative asset paths; deploying under a subdirectory needs a separate base-path change and verification. There is no backend, secret, bank connection or runtime AI API key.
 
 The generated `_headers` file contains the response policy for hosts supporting that format. Otherwise apply its headers through the host's configuration to **all responses, including OCR/PDF worker scripts**. `npm run preview:browser` supplies those headers locally. The HTML CSP meta tag is an additional page-level restriction; it cannot replace response headers on worker scripts. Do not remove `wasm-unsafe-eval`, which is needed for local OCR WebAssembly. Do not add general `unsafe-eval`, remote script origins, analytics or third-party widgets without re-evaluating private document handling.
 
-The complete asset directory is roughly 54 MiB because it includes local PDF/OCR support and English language data. Only required modules/assets are fetched for a task; the browser does not eagerly download every engine variant. Once loaded, document processing is local, but a fresh offline start is not supported through a service worker or installed PWA. No public deployment has been created by this work.
+The complete asset directory is roughly 54 MiB because it includes local PDF/OCR support and English language data. Only required modules/assets are fetched for a task; the browser does not eagerly download every engine variant. Once loaded, document processing is local, but a fresh offline start is not supported through a service worker or installed PWA. The public demo is hosted with Sites at https://fundthread.tarpit-ai.chatgpt.site.
 
 ## Inputs and outputs
 
