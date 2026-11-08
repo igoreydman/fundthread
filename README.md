@@ -6,11 +6,17 @@ FundThread helps nonprofit staff follow an expense from its original receipt to 
 
 The main views are **Receipts**, **Analytics**, and **Reports & privacy**. Grant funds, reimbursements, activity, and recovery support that core workflow.
 
+**[Try the browser demo](https://fundthread.tarpit-ai.chatgpt.site)** · **[Watch the video](https://youtu.be/EU2lbzVB3sE)**
+
+The hosted demo is publicly viewable and requires no installation. Explore the fictional sample or import receipts into a temporary workspace. Records and uploads stay in the browser tab's memory and clear on reload; download any outputs you need before leaving.
+
 ![Receipt workbench](docs/screenshots/current-receipts.png)
 
-## Run the browser demo
+## Run locally
 
 Requires **Node.js 22.12+ and npm**. No database, Rust installation, account, or API key is needed for browser mode.
+
+From a terminal on your own computer:
 
 ```sh
 git clone https://github.com/igoreydman/fundthread.git
@@ -20,7 +26,9 @@ npm run build:browser
 npm run preview:browser
 ```
 
-Open **http://127.0.0.1:1421/**. Explore the fictional Tidepath records, or choose **Import receipts** to start a separate workspace with your own files. Try the fictional [receipt PDF](docs/examples/receipt-to-import.synthetic.pdf) or [receipt photo](docs/examples/receipt-photo.synthetic.png).
+Keep the terminal running. Once Vite reports that the preview server is ready, open `http://127.0.0.1:1421/` in a browser on the same computer. This address points to your own computer and only works while the local server is running. To start it again later, run `npm run preview:browser` from the `fundthread` folder. If port 1421 is occupied, stop the other server or use `npm run preview:browser -- --port 1422` and open the address Vite prints.
+
+Explore the fictional Tidepath records, or choose **Import receipts** to start a separate workspace with your own files. Try the fictional [receipt PDF](docs/examples/receipt-to-import.synthetic.pdf) or [receipt photo](docs/examples/receipt-photo.synthetic.png).
 
 **Browser storage is temporary:** originals and records stay in this tab's memory. Reloading, closing, or returning to the sample clears that workspace. Download needed reports and reviewed receipt copies first. This is not a persistent archive or backup.
 
@@ -52,7 +60,7 @@ The submission walkthrough starts with one **$200.00** fund and two unreviewed r
 
 The fund shows **$53.25 approved** and **$146.75 remaining**. Recording an external **$20.00** payment leaves **$33.25 owed**, while fund usage stays **$53.25**. Analytics and the letterhead report show that same approved expense. The other receipts remain unreviewed rather than entering reports automatically.
 
-See the [2:30 walkthrough script](docs/submission/video-script.txt) and [submission description](docs/submission/description.txt). All demonstration people, organizations, receipts, and references are fictional.
+Watch the [demo video](https://youtu.be/EU2lbzVB3sE). The [walkthrough script](docs/submission/video-script.txt) and [submission description](docs/submission/description.txt) provide additional context. All demonstration people, organizations, receipts, and references are fictional.
 
 ## Privacy and exports
 
